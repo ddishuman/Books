@@ -24,8 +24,27 @@ namespace Books.API.Services
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
-        public async Task<Book> GetBookAsync(Guid id)
+        private Task<int> GetBookPages()
         {
+            return Task.Run(() =>
+            {
+                var pageCalculatr = new Books.Legacy.ComplicatedPageCalculator();
+                _logger.LogInformation($"ThreadID when calculating the amount of pages: " +
+                    $"{Thread.CurrentThread.ManagedThreadId}");
+
+                return pageCalculatr.CalculateBookPages();
+            });
+        }
+
+        public async Task<Book?> GetBookAsync(Guid id)
+        {
+            //var pageCalculatr = new Books.Legacy.ComplicatedPageCalculator();
+            //var amountOfPages = pageCalculatr.CalculateBookPages();
+            _logger.LogInformation($"ThreadID when entering GetBookAsync: " +
+                    $"{Thread.CurrentThread.ManagedThreadId}");
+
+            var bookPages = await GetBookPages();
+
             return await _context.Books.Include(b => b.Author)
                 .FirstOrDefaultAsync(b => b.Id == id);
         }
